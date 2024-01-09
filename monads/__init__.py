@@ -1,5 +1,7 @@
+from typing import Any
+
 class Monad:
-    def __init__(self, value):
+    def __init__(self: Any, value):
         self.value = value
 
     def bind(self, func):
@@ -12,6 +14,9 @@ class Monad:
         return result
 
     def __or__(self, other):
+        return self.bind(other)
+
+    def __rshift__(self, other):
         return self.bind(other)
 
     def unwrap(self):
@@ -29,15 +34,15 @@ class Maybe(Monad):
             return Maybe(None)
         return Maybe(func(self.value))
 
-class ListMonad(Monad):
+class List(Monad):
     def bind(self, func):
-        return ListMonad([func(x) for x in self.value])
+        return List([func(x) for x in self.value])
 
     def filter(self, func):
-        return ListMonad([i for i in self.value if func(i)])
+        return List([i for i in self.value if func(i)])
 
 class Result(Monad):
-    def __init__(self, value, exception = None):
+    def __init__(self, value, exception = None, traceback = None):
         self.value = value
         self.exception = exception
 
