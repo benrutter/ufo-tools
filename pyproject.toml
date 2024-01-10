@@ -1,11 +1,11 @@
 [project]
 name = "monads"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.1"
+description = "Python monads for functional programing"
 
 dependencies = []
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">= 3.8"
 
 [build-system]
 requires = ["hatchling"]
@@ -15,6 +15,12 @@ build-backend = "hatchling.build"
 managed = true
 dev-dependencies = [
     "ipython>=8.18.1",
+    "hatch>=1.9.1",
+    "keyring>=24.3.0",
+    "pytest>=7.4.4",
+    "mypy>=1.8.0",
+    "black>=23.12.1",
+    "isort>=5.13.2",
 ]
 
 [tool.hatch.metadata]
