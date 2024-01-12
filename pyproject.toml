@@ -1,5 +1,5 @@
 [project]
-name = "monads"
+name = "monadcontainers"
 version = "0.0.1"
 description = "Python monads for functional programing"
 
@@ -21,6 +21,9 @@ dev-dependencies = [
     "mypy>=1.8.0",
     "black>=23.12.1",
     "isort>=5.13.2",
+    "twine>=4.0.2",
+    "coverage>=7.4.0",
+    "pdoc>=14.3.0",
 ]
 
 [tool.hatch.metadata]

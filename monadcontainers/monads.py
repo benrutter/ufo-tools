@@ -13,12 +13,6 @@ class Monad(Generic[T]):
     def bind(self, func) -> "Monad":
         return Monad(func(self.value))
 
-    def pipe(self, *funcs) -> "Monad":
-        result = self
-        for func in funcs:
-            result = self.bind(func)
-        return result
-
     def __rshift__(self, other) -> "Monad":
         return self.bind(other)
 
@@ -32,14 +26,14 @@ class Monad(Generic[T]):
         return self.__str__()
 
 
-class Maybe(Generic[T], Monad):
+class Maybe(Monad, Generic[T]):
     def bind(self, func: Callable) -> "Maybe":
         if self.value is None:
             return Maybe(None)
         return Maybe(func(self.value))
 
 
-class List(Generic[T], Monad):
+class List(Monad, Generic[T]):
     def __init__(self: Any, value: ListType[T]) -> None:
         self.value: ListType[T] = value
 
@@ -53,7 +47,7 @@ class List(Generic[T], Monad):
         return self.value
 
 
-class Result(Generic[T], Monad):
+class Result(Monad, Generic[T]):
     def __init__(self, value: T, exception: Optional[Type[Exception]] = None):
         self.value: T = value
         self.exception = exception

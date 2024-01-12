@@ -1,6 +1,6 @@
 import pytest
 
-from monads import monads
+from monadcontainers import monads
 
 
 def test_monad_class_function_chaining_produces_expected():
@@ -20,6 +20,11 @@ def test_monad_class_overrides_rshift():
 
 def test_monad_class_provides_string_method_displaying_value():
     actual = str(monads.Monad(2))
+    assert actual == "Monad(2)"
+
+
+def test_monad_class_provides_repr_method_displaying_value():
+    actual = monads.Monad(2).__repr__()
     assert actual == "Monad(2)"
 
 
@@ -47,8 +52,19 @@ def test_list_monad_applies_single_function_over_list():
     assert set(actual.unwrap()) == {2, 3}
 
 
+def test_list_monad_provides_filter_function():
+    actual = monads.List([1, 2]).filter(lambda x: x == 1)
+    assert set(actual.unwrap()) == {1}
+
+
 def test_result_monad_captures_error_without_raising():
     actual = monads.Result(1).bind(lambda x: x / 0)
+    assert actual.value == None
+    assert isinstance(actual.exception, ZeroDivisionError)
+
+
+def test_result_monad_maintains_error_down_function_stack():
+    actual = monads.Result(1) >> (lambda x: x / 0) >> (lambda x: x + 1)
     assert actual.value == None
     assert isinstance(actual.exception, ZeroDivisionError)
 
@@ -64,6 +80,16 @@ def test_result_monad_replaces_error_with_unwrap_or():
     assert actual == 2
 
 
+def test_result_monad_keeps_value_if_present_with_unwrap_or():
+    actual = monads.Result(1).unwrap_or(99)
+    assert actual == 1
+
+
 def test_result_monad_otherwise_works_as_normal():
     actual = monads.Result(2).bind(lambda x: x + 1).bind(lambda x: x * 2).unwrap()
     assert actual == 6
+
+
+def test_result_monad_produces_custom_exception_str_rep():
+    actual = str(monads.Result(1).bind(lambda x: x / 0))
+    assert actual == "Result(division by zero)"
