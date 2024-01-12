@@ -2,6 +2,8 @@
 
 Delicious monads for functional programming patterns in python!
 
+[Check out the api docs for reference](https://benrutter.github.io/monads/monadcontainers.html)
+
 ![Coverage Badge](https://img.shields.io/badge/coverage-100-green) ![Static Badge](https://img.shields.io/badge/python-%3E%3D3.8-blue)
 
 ## Project Goals
