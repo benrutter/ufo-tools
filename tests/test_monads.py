@@ -30,8 +30,7 @@ def test_monad_class_provides_repr_method_displaying_value():
 
 def test_monad_string_method_is_inhereted_correctly():
     class TestMonad(monads.Monad):
-        def nothing(self):
-            pass
+        pass
 
     actual = str(TestMonad("seven"))
     assert actual == "TestMonad(seven)"
@@ -92,4 +91,19 @@ def test_result_monad_otherwise_works_as_normal():
 
 def test_result_monad_produces_custom_exception_str_rep():
     actual = str(monads.Result(1).bind(lambda x: x / 0))
+    assert actual == "Result(division by zero)"
+
+
+def test_result_monad_can_recover_with_given_function():
+    actual = monads.Result(1).bind(lambda x: x / 0).recover(lambda x: x + 1)
+    assert actual.value == 2
+
+
+def test_result_monad_recover_method_does_nothing_if_not_in_error_state():
+    actual = monads.Result(1).bind(lambda x: x + 1).recover(lambda x: 9)
+    assert actual.value == 2
+
+
+def test_result_monad_recover_method_returns_result_in_error_state_if_fails():
+    actual = str(monads.Result(1).bind(lambda x: x / 0).recover(lambda x: x / 0))
     assert actual == "Result(division by zero)"

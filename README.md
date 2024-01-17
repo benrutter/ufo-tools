@@ -1,4 +1,4 @@
-# Monad Containers
+# Monad Containers 🛸
 
 Delicious monads for functional programming patterns in python!
 
@@ -8,7 +8,7 @@ Delicious monads for functional programming patterns in python!
 
 ## Project Goals
 
-This library is meant to be a simple class for functional chaining in python in a way that:
+This library is meant to implement a simple Monad class for functional chaining in python in a way that:
 
 - Can be intergrated quickly/simply with existing code
 - Maintains type safety
@@ -80,6 +80,7 @@ x.unwrap()  # <- raises divide by zero exception
 x.unwrap_or(42)  # <- evaluates to 42
 x.value  # <- is None (since exception has been raised)
 x.exception  # <- is a ZeroDivisionError
+x.recover(add_six)  # <- will apply the given function to the last non-error state
 ```
 
 Monad's can be a helpful pattern for functional programming, see the docs for more info on available Monad classes.

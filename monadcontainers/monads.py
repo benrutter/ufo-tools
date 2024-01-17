@@ -1,6 +1,7 @@
 from typing import Any, Callable, Generic
 from typing import List as ListType
 from typing import Optional, Type, TypeVar, Union
+from copy import deepcopy
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -186,8 +187,9 @@ class Result(Monad, Generic[T]):
         """
         self.value: T = value
         self.exception = exception
+        self._value_to_recover = None
 
-    def bind(self, func):
+    def bind(self, func) -> "Result":
         """
         Execute function on value, if error is raised,
         returned Monad will have value of "None" and an exception.
@@ -198,10 +200,13 @@ class Result(Monad, Generic[T]):
         """
         if self.exception:
             return self
+        value_copy = deepcopy(self.value)
         try:
             return Result(func(self.value))
         except Exception as exception:
-            return Result(None, exception)
+            error_monad = Result(None, exception)
+            error_monad._value_to_recover = value_copy
+            return error_monad
 
     def unwrap(self) -> T:
         """
@@ -219,6 +224,32 @@ class Result(Monad, Generic[T]):
         if self.exception:
             return value
         return self.value
+
+    def recover(self, func) -> "Result":
+        """
+        If Result is in error state, apply function to last
+        non-error state value.
+
+        Example:
+        ```python
+        x = (
+            Result(3)
+            .bind(lamba x: x / 0)
+            .recover(lambda x: x + 1)
+        )
+        x == 4  # <- recover function applied to 3
+        ```
+        """
+        if self.exception:
+            value_copy = deepcopy(self._value_to_recover)
+            try:
+                return Result(func(self._value_to_recover))
+            except Exception as exception:
+                error_monad = Result(None, exception)
+                error_monad._value_to_recover = value_copy
+                return error_monad
+        return self
+        
 
     def __str__(self) -> str:
         """
