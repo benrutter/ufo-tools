@@ -1,6 +1,7 @@
-# Monad Containers 🛸
+# UFO 🛸
+*uniform functional orchestrators*
 
-Delicious monads for functional programming patterns in python!
+Delicious monads and functional programming patterns in python!
 
 [Check out the api docs for reference](https://benrutter.github.io/monads/monadcontainers.html)
 
@@ -8,7 +9,7 @@ Delicious monads for functional programming patterns in python!
 
 ## Project Goals
 
-This library is meant to implement a simple Monad class for functional chaining in python in a way that:
+This library is meant to implement a simple tools for functional programming in python in a way that:
 
 - Can be intergrated quickly/simply with existing code
 - Maintains type safety

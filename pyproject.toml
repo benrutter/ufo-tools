@@ -1,11 +1,25 @@
 [project]
-name = "monadcontainers"
+name = "ufo_tools"
 version = "0.2.0"
 description = "Python monads for functional programing"
-
 dependencies = []
 readme = "README.md"
 requires-python = ">= 3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/benrutter/monads"
+Documentation = "https://benrutter.github.io/monads/monadcontainers.html"
+Homepage = "https://benrutter.github.io/monads/monadcontainers.html"
+Issues = "https://github.com/benrutter/monads/issues"
+
 
 [build-system]
 requires = ["hatchling"]
@@ -28,3 +42,6 @@ dev-dependencies = [
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["ufo"]
