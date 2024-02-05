@@ -13,7 +13,16 @@ class Scope:
 
     Note: because Python doesn't support scoped blocks like this
     the `scope` variable itself will still exist, but won't
-    contain any data)
+    contain any data. Be careful not to accidentally shadow variables
+    out of scope:
+
+    ``python
+    scope = 9
+    with Scope(name="Zharg", age=923) as scope:
+        print(f"I am {scope.name}")
+
+    scope != 9  # scope has now been overwritten as is empty Scope object
+    ```
     """
 
     def __init__(self, **kwargs):
@@ -34,5 +43,5 @@ class Scope:
         """
         On exit from context, deletes all non-dunder object variables
         """
-        for var in filter(lambda x: ~x.startswith("__"), dir(self)):
+        for var in filter(lambda x: not x.startswith("__"), dir(self)):
             delattr(self, var)
