@@ -1,15 +1,15 @@
-from typing import Any, Callable, Generic
+from typing import Any, Callable, Generic, Generator
 from typing import List as ListType
 from typing import Optional, Type, TypeVar, Union
-from copy import deepcopy
+from functools import reduce, partial
 
 T = TypeVar("T")
 U = TypeVar("U")
 
 
-class Monad(Generic[T]):
+class Simple(Generic[T]):
     """
-    Identity monad (also the parent class for all other monads).
+    Simple identity container (also the parent class for all other containers)
 
     No additional work is handled on function calls, apart from returning
     a new monad with an updated result.
@@ -20,7 +20,7 @@ class Monad(Generic[T]):
     def make_loud(x:str) -> str:
         return x.upper()
 
-    x = Monad("hello world!") >> make_loud
+    x = Simple("hello world!") >> make_loud
 
     print(x.value)
     # prints out "HELLO WORLD!"
@@ -28,27 +28,37 @@ class Monad(Generic[T]):
     """
     def __init__(self: Any, value: T) -> None:
         """
-        Initialise a monad with the given value
+        Initialise a container with the given value
         """
         self.value: T = value
 
-    def bind(self, func) -> "Monad":
+    def bind(self, func, **kwargs) -> "Simple":
         """
         Method to apply function to value of Monad.
-        Returns a monad with the updated value.
+        Returns a container with the updated value.
 
         Example:
         ```python
-        Monad(2).bind(lambda x: x+1) == Monad(3)
+        Simple(2).bind(lambda x: x+1) == Simple(3)
         ```
 
         Can be aliased with `>>` symbol:
         ```python
-        (Monad(2) >> (lambda x: x+1)) == Monad(3)
-        """
-        return Monad(func(self.value))
+        (Simple(2) >> (lambda x: x+1)) == Simple(3)
+        ```
 
-    def __rshift__(self, other) -> "Monad":
+        Additional keyword arguments for function can be provided:
+        ```python
+        def add_to(x:int, y:int) -> int:
+            return x + y
+
+        Simple(4).bind(add_to, y=1) == Simple(5)
+        ```
+        (note that this isn't possible using `>>` alias)
+        """
+        return Simple(partial(func, **kwargs)(self.value))
+
+    def __rshift__(self, other) -> "Simple":
         """
         Dunder method to alias bind into >>
         """
@@ -56,14 +66,23 @@ class Monad(Generic[T]):
 
     def unwrap(self) -> T:
         """
-        Return only the value of the monad without wrapping
+        Return only the value of the Simple without wrapping
         it.
 
         ```python
-        Monad(4).unwrap() == 4
+        Simple(4).unwrap() == 4
         ```
         """
         return self.value
+
+    def __eq__(self, other) -> bool:
+        """
+        Equality operator, true if containers are of same type
+        and values are equal.
+        """
+        if not isinstance(other, type(self)):
+            return False
+        return self.value == other.value
 
     def __str__(self) -> str:
         """
@@ -73,14 +92,14 @@ class Monad(Generic[T]):
 
     def __repr__(self) -> str:
         """
-        For repls
+        Representaion for REPLs
         """
         return self.__str__()
 
 
-class Maybe(Monad, Generic[T]):
+class Maybe(Simple, Generic[T]):
     """
-    Monad to handle None values.
+    Container to handle None values.
 
     Write functions as if they can't recieve None values.
     If Monad value is None, it will skip execution of function
@@ -100,8 +119,22 @@ class Maybe(Monad, Generic[T]):
             return Maybe(None)
         return Maybe(func(self.value))
 
+    def unwrap_or(self, value: U) -> Union[T, U]:
+        """
+        Return container value, unless that is None
+        in which case return given value.
 
-class List(Monad, Generic[T]):
+        Example:
+        ```python
+        Maybe(None).unwrap_or(8) == 8
+        ```
+        """
+        if self.value is None:
+            return value
+        return self.value
+
+
+class List(Simple, Generic[T]):
     """
     Monad to apply function to all items in list.
 
@@ -110,19 +143,22 @@ class List(Monad, Generic[T]):
     Example:
     ```python
     x = (
-        List([1, 3, 7])
+        List(1, 3, 7)
         >> (lambda x: x + 1)
         >> (lambda x: x / 2)
     )
     # x will evaluate to List([1, 2, 4])
     """
-    def __init__(self: Any, value: ListType[T]) -> None:
+    def __init__(self: Any, *values: T) -> None:
         """
         Initialise a monad with the given list
         """
-        self.value: ListType[T] = value
+        if len(values) == 1 and isinstance(values[0], Generator):
+            self.value: ListType[T] = list(values[0])
+        else:
+            self.value: ListType[T] = list(values)
 
-    def bind(self, func: Callable) -> "List":
+    def bind(self, func: Callable, **kwargs) -> "List":
         """
         Map function on every element of list:
 
@@ -137,7 +173,7 @@ class List(Monad, Generic[T]):
 
         fun_stuff == ["HATS!!!", "CATS!!!", "BATS!!!"]
         """
-        return List([func(x) for x in self.value])
+        return List(partial(func, **kwargs)(x) for x in self.value)
 
     def filter(self, func: Callable) -> "List":
         """
@@ -151,11 +187,11 @@ class List(Monad, Generic[T]):
 
         x == [2, 4]
         """
-        return List([i for i in self.value if func(i)])
+        return List(i for i in self.value if func(i))
 
     def unwrap(self) -> ListType[T]:
         """
-        Return only the value of the monad without wrapping
+        Return only the value of the container without wrapping
         it.
 
         ```python
@@ -164,10 +200,25 @@ class List(Monad, Generic[T]):
         """
         return self.value
 
+    def reduce(self, func: Callable[[T, U], U]) -> Simple[U]:
+        """
+        Applies reduce over list, returning result
+        in a Simple container.
 
-class Result(Monad, Generic[T]):
+        Optional `initial` argument to pass down into reduce.
+        """
+        return Simple(reduce(func, self.value))
+
+    def __str__(self) -> str:
+        """
+        String representation
+        """
+        return f"{self.__class__.__name__}({', '.join(str(i) for i in self.value)})"
+
+
+class Result(Simple, Generic[T]):
     """
-    Monad to handle errors. Handle exceptions on unwrap:
+    Container to handle errors. Handle exceptions on unwrap:
 
     ```python
     x = (
@@ -197,15 +248,21 @@ class Result(Monad, Generic[T]):
         Otherwise, exception will be None, and value will be return.
 
         If exception already exists, function won't be executed.
+
+        Note, that this container does not in itself protect you from
+        mutation, if you're function mutates the value into a
+        non-recoverable state, this could cause errors.
+
+        To avoid mutation, see mutation_free wrapper in metafunctions.
         """
         if self.exception:
             return self
-        value_copy = deepcopy(self.value)
+        to_recover = self.value
         try:
             return Result(func(self.value))
         except Exception as exception:
             error_monad = Result(None, exception)
-            error_monad._value_to_recover = value_copy
+            error_monad._value_to_recover = to_recover
             return error_monad
 
     def unwrap(self) -> T:
@@ -241,15 +298,25 @@ class Result(Monad, Generic[T]):
         ```
         """
         if self.exception:
-            value_copy = deepcopy(self._value_to_recover)
+            to_recover = self._value_to_recover
             try:
                 return Result(func(self._value_to_recover))
             except Exception as exception:
                 error_monad = Result(None, exception)
-                error_monad._value_to_recover = value_copy
+                error_monad._value_to_recover = to_recover
                 return error_monad
         return self
-        
+
+    def in_error_state(self) -> bool:
+        """
+        Function to return bool based on whether container is
+        in error state from previous error.
+
+        Returns True if in error state, and False otherwise.
+        """
+        if self.exception:
+            return True
+        return False
 
     def __str__(self) -> str:
         """
