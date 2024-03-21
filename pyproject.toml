@@ -1,6 +1,6 @@
 [project]
 name = "ufo_tools"
-version = "0.2.0"
+version = "0.2.1"
 description = "Python monads for functional programing"
 dependencies = []
 readme = "README.md"
@@ -15,15 +15,15 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/benrutter/monads"
-Documentation = "https://benrutter.github.io/monads/monadcontainers.html"
-Homepage = "https://benrutter.github.io/monads/monadcontainers.html"
-Issues = "https://github.com/benrutter/monads/issues"
+Repository = "https://github.com/benrutter/ufo-tools"
+Documentation = "https://benrutter.github.io/ufo-tools/index.html"
+Homepage = "https://benrutter.github.io/ufo-tools/index.html"
+Issues = "https://github.com/benrutter/ufo-tools/issues"
 
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["flit_core"]
+build-backend = "flit_core.buildapi"
 
 [tool.rye]
 managed = true
@@ -38,10 +38,5 @@ dev-dependencies = [
     "twine>=4.0.2",
     "coverage>=7.4.0",
     "pdoc>=14.3.0",
+    "ipdb>=0.13.13",
 ]
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["ufo"]

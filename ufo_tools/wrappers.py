@@ -1,11 +1,13 @@
 """
 Useful wrappers for
-decorating function to
+decorating functions to
 gain extra features.
 """
-from typing import Callable, Any
 from copy import deepcopy
 from functools import wraps
+from typing import Any, Callable
+from warnings import warn
+
 
 def mutation_free(func: Callable) -> Callable:
     """
@@ -46,11 +48,13 @@ def mutation_free(func: Callable) -> Callable:
     arguments, it may introduce performance trade-offs in some situations where
     function are taking large objects as arguments.
     """
+
     @wraps(func)
     def wrapped_func(*args, **kwargs):
         copy_kwargs = {deepcopy(k): deepcopy(v) for k, v in kwargs.items()}
         copy_args = [deepcopy(i) for i in args]
         return func(*copy_args, **copy_kwargs)
+
     return wrapped_func
 
 
@@ -67,16 +71,73 @@ def coerce_into(value: Any, *exceptions) -> Callable:
         return config["some_setting"]
     ```
     """
+
     def coerce_wrapper(func_to_wrap: Callable) -> Callable:
         @wraps(func_to_wrap)
         def coercing_func(*args, **kwargs):
             try:
                 return func_to_wrap(*args, **kwargs)
             except Exception as exception:
-                if type(exception) in exceptions:
+                if len(exceptions) == 0 or type(exception) in exceptions:
                     return value
                 raise exception
 
         return coercing_func
 
     return coerce_wrapper
+
+
+def deprecated(func: Callable) -> Callable:
+    """
+    This decorator can be used to mark functions as deprecated, it
+    will emit a warning whenever the function is called.
+    """
+
+    @wraps(func)
+    def wrapped_func(*args, **kwargs):
+        warn(
+            f"{func.__name__} has been marked as deprecated",
+            DeprecationWarning,
+        )
+        return func(*args, **kwargs)
+
+    return wrapped_func
+
+
+def retry(retries: int, *exceptions) -> Callable:
+    """
+    Return wrapper for function to retry on any (if not given) or specific
+    exception types.
+
+    After given number of retries, exception will be raised.
+
+    ```python
+    @retry(3, AssertionError, ValueError)
+    def cool():
+        print("cool!")
+        assert False, "yikes!"()
+    # ^^ With the wrapper, this function will print "cool!"
+    #    three times before crashing
+    ```
+
+    *Friendly warning!* 👽
+    if you're retrying your function probably has side effects, watch out
+    that function failures and retries aren't doing something like
+    writing to a database multiple times.
+    """
+
+    def wrapper(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            for attempt in range(retries, 0, -1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as exception:
+                    if exceptions and type(exception) not in exceptions:
+                        raise exception
+                    last_exception = exception
+            raise last_exception
+
+        return wrapped_func
+
+    return wrapper
