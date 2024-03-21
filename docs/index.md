@@ -7,6 +7,11 @@ This library is meant to implement a simple tools for functional programming in 
 - Maintains type safety
 - Depends only on the standard library
 
+## How to install
+
+```python
+pip install ufo-tools
+```
 
 ## Quick Start
 
