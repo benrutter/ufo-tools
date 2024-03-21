@@ -1,0 +1,19 @@
+site_name: ufo tools
+site_url: https://benrutter.github.io/ufo-tools
+
+nav:
+  - Home: index.md
+  - API Docs:
+    - containers.md
+    - wrappers.md
+
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: indigo
+    accent: amber
+
+plugins:
+  - mkdocstrings

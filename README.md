@@ -15,76 +15,137 @@ This library is meant to implement a simple tools for functional programming in 
 - Maintains type safety
 - Depends only on the standard library
 
-
 ## Quick Start
 
-Install libary with pip:
+UFO is a library to help with functional programming patterns in python.
 
-```bash
-pip install monadcontainers
-```
+It's designed to be very small and get out your way rather than requiring use everywhere.
 
-You can now import monad classes for handling functional chains over data.
+The library contains two modules: `wrappers` and `containers`. The wrappers are the most simple, so we can start with them.
 
-Say we want to pass a value through a list of functions like so:
+## Wrappers
 
-```python
-def add_six(x: int) -> int:
-  return x + 6
-
-def minus_two(x: int) -> int:
-  return x - 2
-
-x = minus_two(add_six(4))  # x == 8
-```
-
-This can be a little messy with long calls, more importantly monads can handle repeated work for us with each call (but we'll cover that in a sec).
-
-A basic identity Monad implementing the above looks like this:
+Say you have a function that mutates its arguments:
 
 ```python
-from monadcontainers.monads import Monad
-
-x = (
-  Monad(4)
-  .bind(add_six)
-  .bind(minus_two)
-)  # x == Monad(8)
-
-y = x.value  # y == 8
+def maximum_of_list_and_also_seven(some_list: list[int]):
+    """
+    Gets the biggest number from a list of ints, but with
+    seven also included for consideration since its such
+    a good number.
+    """
+    some_list.append(7)
+    return max(some_list)
 ```
 
-This above pattern chains the Monad contained value through the relevant functions. For alternative syntactical sugar to the `bind` method, you can use `>>`:
+The function is simple enough to follow but it's doing something potentially annoying and mutating the `some_list` variables.
+
+For instance:
 
 ```python
-x = (
-  Monad(4)
-  >> add_six
-  >> minus_two
-)  # x == Monad(8)
+my_list = [1, 4]
+
+max_item = maximum_of_list_and_also_seven(my_list)
+
+print(max_item)  # prints out 7
+
+print(my_list)  # [1, 4, 7]
 ```
 
-We can also use Monads to handle additional functionality for us, like error handling with the `Result` monad:
+Oh no! Our list changed under our feet, that's rude! A lot of the time we don't want this to happen since it can lead to confusing errors. So you could work around it in a bunch of different ways. `ufo_tools` gives you an easy one:
 
 ```python
-def divide_by_zero(x: int) -> int:
-    return x / 0
+from ufo_tools.wrappers import mutation_free
 
-x = (
-  Result(4)
-  >> add_six
-  >> divide_by_zero
-  >> minus_two
-)  # x is a result monad
-
-x.unwrap()  # <- raises divide by zero exception
-x.unwrap_or(42)  # <- evaluates to 42
-x.value  # <- is None (since exception has been raised)
-x.exception  # <- is a ZeroDivisionError
-x.recover(add_six)  # <- will apply the given function to the last non-error state
+@mutation_free
+def maximum_of_list_and_also_seven(some_list: list[int]):
+    """
+    Gets the biggest number from a list of ints, but with
+    seven also included for consideration since its such
+    a good number.
+    """
+    some_list.append(7)
+    return max(some_list)
 ```
 
-Monad's can be a helpful pattern for functional programming, see the docs for more info on available Monad classes.
+Phew! Now that function will get passed down deep copies of the `some_list` variable, instead of `some_list` itself, and we can all sleep easy at night.
 
-Enjoy! 👍
+Even better, the `@mutation_free` wrapper also makes pretty quick reading to know that the function can't mutate it's arguments.
 
+See the documentation for some more examples (like adding in retry logic, error handling and deprecation warnings) but hopefully you get the idea. The wrappers are there as some drop in tools to help you on your way to some nice guarantees when working with python.
+
+
+## Containers
+
+Containers are a common pattern for functional programming, they let us chain together values nicely.
+
+Say we're building up some kind on string:
+
+```python
+def make_exciting(string):
+  return string + "!!!"
+
+def make_loud(string):
+  return string.upper()
+
+def say_hello(name):
+  return f"hello {name}"
+
+name = "Sam"
+greeting = say_hello(name)
+loud_greeting = make_loud(greeting)
+exciting_loud_greeting = make_exciting(loud_greeting)
+
+print(exciting_loud_greeting)  # HELLO SAM!!!
+```
+
+There's a lot of variables, which in practice aren't ever used, but they *could* get used any time, so we have to keep thinking about them. We can cut down on unnecesary thinking by chaining functions in a big row:
+
+```python
+message = make_exciting(make_loud(say_hello("Sam")))
+print(message)
+```
+
+Phew! Except there's enough brackets to make a lisp programmer cry, and also we're reading in the *opposite order* of the functions being called. `make_exciting` happens last, but we're reading it first which means we're back to extra thinking again! And that's what we were trying to avoid.
+
+Fortunately containers is here to save you:
+
+```python
+from ufo.containers import Container
+
+message = (
+  Container("Sam")
+  .then(say_hello)
+  .then(make_loud)
+  .then(make_exciting)
+  .unwrap()
+)
+print(message)
+```
+That's a little easier to follow. The `unwrap` message probably looks a little strange at the end to you - all it's doing is taking the string back out of the container, so we have just a string to print.
+
+Even better than that, we can actually use containers to do a bunch of busy work for us, say we have a whole bunch of names:
+
+```python
+names = ["Lisa", "Bart", "Homer", "Maggie", "Marge"]
+greetings = [say_hello(i) for i in names]
+loud_greetings = [make_loud(i) for i in greetings]
+exciting_loud_greetings = [make_exciting(i) for i in loud_greetings]
+```
+
+Oh boy! I'm tired just from typing that example.
+
+Instead, we can use an `Array` container to iterate over things:
+
+```python
+from ufo.containers import Array
+messages = (
+  Array("Lisa", "Bart", "Homer", "Maggie", "Marge")
+  .then(say_hello)
+  .then(make_loud)
+  .then(make_exciting)
+)
+```
+This makes things a little easier. The `Array` container also comes with some additional helpers for working with lists like `filter` and `reduce`.
+
+There's containers for handling errors and Nones too - check out the API docs for full details.

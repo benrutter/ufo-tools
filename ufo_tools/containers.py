@@ -1,10 +1,21 @@
 """
-Handy containers
-for functional chaining in
+Handy containers \n
+for functional chaining in \n
 python codebases.
 """
-from functools import partial, reduce
-from typing import Any, Callable, Generator, Generic, Optional, Type, TypeVar, Union, List, Tuple
+from functools import reduce
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    List,
+    Tuple,
+)
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -36,6 +47,7 @@ class Container(Generic[T]):
     # >> prints out "HELLO WORLD!!!!"
     ```
     """
+
     def __init__(self, value: T) -> None:
         """
         Initialise a container for mapping functions over
@@ -149,7 +161,7 @@ class Container(Generic[T]):
         """
         return self.__str__()
 
-    
+
 class Maybe(Container, Generic[T]):
     """
     Container to handle None values.
@@ -159,7 +171,7 @@ class Maybe(Container, Generic[T]):
     remain as None.
 
     Simple example:
-    ```
+    ```python
     nope = (
         Maybe(None)
         .then(lambda x: x + 3)
@@ -172,7 +184,13 @@ class Maybe(Container, Generic[T]):
     For Maybe containers, `unwrap` can additionally be given an "or"
     value which will be defaulted to if containers value is None.
     """
-    def then(self, func: Callable, *args, **kwargs) -> "Maybe":
+
+    def then(
+        self,
+        func: Union[Callable[..., T], Tuple[Callable[..., T], Union[int, str]]],
+        *args,
+        **kwargs,
+    ) -> "Maybe":
         """
         Execute function on value, unless None in which case
         execution is skipped.
@@ -183,7 +201,7 @@ class Maybe(Container, Generic[T]):
             return Maybe(None)
         return Maybe(self._value_then(self.value, func, *args, **kwargs))
 
-    def unwrap(self, default: U = None) -> Union[T, U]:
+    def unwrap(self, default: Optional[U] = None) -> Union[T, U, None]:
         """
         Return the container's value.
 
@@ -205,7 +223,6 @@ class Array(Container, Generic[T]):
 
     Write functions as if they act on a single value.
 
-    Example:
     ```python
     x = (
         Array(1, 3, 7)
@@ -214,18 +231,25 @@ class Array(Container, Generic[T]):
     )
 
     # x will evaluate to Array(1, 2, 4)
+    ```
     """
 
     def __init__(self: Any, *values: T) -> None:
         """
         Initialise a monad with the given list
         """
+        self.value: List[T]
         if len(values) == 1 and isinstance(values[0], Generator):
-            self.value: List[T] = list(values[0])
+            self.value = list(values[0])
         else:
-            self.value: List[T] = list(values)
+            self.value = list(values)
 
-    def then(self, func: Callable, *args, **kwargs) -> "Array":
+    def then(
+        self,
+        func: Union[Callable[..., T], Tuple[Callable[..., T], Union[int, str]]],
+        *args,
+        **kwargs,
+    ) -> "Array":
         """
         Map function over every item in array:
 
@@ -272,10 +296,11 @@ class Array(Container, Generic[T]):
         x == Array(2)
         ```
         """
-        return Array(i for i in self.value if self._value_then(i, func, *args, **kwargs))
+        return Array(
+            i for i in self.value if self._value_then(i, func, *args, **kwargs)
+        )
 
-
-    def reduce(self, func: Callable[[T, U], U], initial: Optional[T] = None) -> Container[U]:
+    def reduce(self, func: Callable, initial: Any = None) -> Container:
         """
         Applies reduce over list, returning result
         in a Container (*not* Array).
@@ -308,14 +333,14 @@ class Result(Container, Generic[T]):
     ```
     """
 
-    def __init__(self, value: T, exception: Optional[Type[Exception]] = None):
+    def __init__(self, value: T, exception: Optional[Exception] = None):
         """
         Create Result monad with value and exception
         (one of which will always be None)
         """
         self.value: T = value
         self.exception = exception
-        self._value_to_recover = None
+        self._value_to_recover: Any = None
 
     def then(self, func) -> "Result":
         """
@@ -342,7 +367,7 @@ class Result(Container, Generic[T]):
             error_monad._value_to_recover = to_recover
             return error_monad
 
-    def unwrap(self, default: Any = DEFAULT, *exceptions) -> T:
+    def unwrap(self, default: Any = DEFAULT, *exceptions: Type[Exception]) -> T:
         """
         If exception has not been raise, will return value, otherwise
         if no default is given, will raise the last exception.

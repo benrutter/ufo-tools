@@ -1,6 +1,6 @@
 [project]
 name = "ufo_tools"
-version = "0.2.1"
+version = "0.2.2"
 description = "Python monads for functional programing"
 dependencies = []
 readme = "README.md"
@@ -29,14 +29,14 @@ build-backend = "flit_core.buildapi"
 managed = true
 dev-dependencies = [
     "ipython>=8.18.1",
-    "hatch>=1.9.1",
-    "keyring>=24.3.0",
     "pytest>=7.4.4",
     "mypy>=1.8.0",
     "black>=23.12.1",
-    "isort>=5.13.2",
     "twine>=4.0.2",
     "coverage>=7.4.0",
-    "pdoc>=14.3.0",
     "ipdb>=0.13.13",
+    "mkdocs>=1.5.3",
+    "mkdocs-material>=9.5.14",
+    "mkdocstrings>=0.24.1",
+    "mkdocstrings-python>=1.9.0",
 ]
