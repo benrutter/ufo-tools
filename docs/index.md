@@ -7,6 +7,8 @@ This library is meant to implement a simple tools for functional programming in 
 - Maintains type safety
 - Depends only on the standard library
 
+Find the source code [on github](https://github.com/benrutter/ufo-tools)
+
 ## How to install
 
 ```python
